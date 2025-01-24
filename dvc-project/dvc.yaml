@@ -1,0 +1,9 @@
+dvc-project
+├── data
+│   └── raw
+├── .dvc
+│   └── config
+├── .gitignore
+├── dvc.yaml
+├── dvc.lock
+└── README.md
