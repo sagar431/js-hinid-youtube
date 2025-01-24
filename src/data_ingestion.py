@@ -13,10 +13,10 @@ try:
     df = df.iloc[:, 3:]
 
     # Filter rows where Length of Membership > 3
-    df = df[df['Length of Membership'] > 3]
+    df = df[df['Length of Membership'] > 1]
 
     # Drop specified column
-    df.drop(columns=['Avg. Session Length'], inplace=True)
+   
 
     # Save processed data
     output_path = os.path.join('data', 'customer.csv')
