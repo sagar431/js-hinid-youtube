@@ -1,7 +1,6 @@
-I'll create a comprehensive README.md that includes all the project details and uv package manager specifics:
-
-```markdown:README.md
 # Cat vs Dog Classifier with PyTorch Lightning
+
+Implementation from MLOps Course - Session 04
 
 A production-ready MLOps implementation of a cat vs dog image classifier using PyTorch Lightning, featuring comprehensive logging, monitoring, and a complete ML pipeline.
 
@@ -225,6 +224,3 @@ MIT License
 - [PyTorch Lightning Documentation](https://lightning.ai/docs/pytorch/stable/)
 - [MobileNetV2 Paper](https://arxiv.org/abs/1801.04381)
 - [uv Package Manager](https://github.com/astral-sh/uv)
-```
-
-
