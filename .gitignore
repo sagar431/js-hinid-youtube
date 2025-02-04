@@ -40,3 +40,4 @@ tensorboard/
 # Local development
 .env
 .env.local 
+/data

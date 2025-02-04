@@ -1,226 +1,178 @@
+I'll help you create a detailed README.md that shows the prompts and steps used to build this project:
+
+```markdown:README.md
 # Cat vs Dog Classifier with PyTorch Lightning
 
-Implementation from MLOps Course - Session 04
+A production-ready MLOps implementation built through a series of prompts focusing on best practices and modern tooling.
 
-A production-ready MLOps implementation of a cat vs dog image classifier using PyTorch Lightning, featuring comprehensive logging, monitoring, and a complete ML pipeline.
+## 🎯 Project Development Prompts
 
-## 🌟 Features
-
-- 🚀 MobileNetV2-based transfer learning
-- 📊 Comprehensive logging with Loguru and TensorBoard
-- 🎯 Rich progress tracking and visualization
-- 🔄 Complete ML pipeline (train/validate/test/infer)
-- 🛠 Production-ready project structure
-- 📈 Performance visualization with confidence scores
-- 🎨 Beautiful prediction visualizations
-
-## 🏗 Project Structure
-
-```
-mlops-practice/
-├── src/
-│   ├── data/
-│   │   ├── __init__.py
-│   │   └── datamodule.py      # Dataset handling
-│   ├── models/
-│   │   ├── __init__.py
-│   │   └── classifier.py      # MobileNetV2 model
-│   ├── utils.py              # Logging utilities
-│   ├── train.py             # Training pipeline
-│   ├── infer.py             # Inference with viz
-│   └── download_samples.py   # Sample images
-├── configs/
-│   └── config.yaml          # Training config
-├── samples/                 # Test images
-├── predictions/             # Model outputs
-├── logs/                    # Training logs
-└── README.md
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.12+
-- uv package manager
-- CUDA-capable GPU (optional)
-
-### Installation
-
-1. Clone the repository:
+### 1. Initial Setup & Structure
 ```bash
-git clone https://github.com/yourusername/mlops-practice.git
-cd mlops-practice
+# Initial prompt to set up project structure
+"Create a PyTorch Lightning project structure for a cat vs dog classifier with:
+- src/ directory for source code
+- configs/ for Hydra configuration
+- Modern dependency management using uv
+- Python 3.12+ support"
 ```
 
-2. Create virtual environment using uv:
+### 2. Data Pipeline Implementation
 ```bash
-uv venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# Data handling prompt
+"Implement a LightningDataModule for cat/dog classification with:
+- Automatic dataset download
+- Train/val/test splits (80/10/10)
+- Image transforms (resize to 96x96)
+- Configurable batch size and workers"
 ```
 
-3. Install dependencies with uv:
+### 3. Model Architecture
 ```bash
-uv pip install -r requirements.txt
-# or
-uv pip install -e .
+# Model implementation prompt
+"Create a transfer learning classifier using:
+- TimmClassifier with MobileNetV2 backbone
+- Configurable learning rate and optimizer
+- Training/validation/test step implementations
+- Accuracy metrics logging"
 ```
 
-### Training Pipeline
-
-1. Configure training in `configs/config.yaml`:
-```yaml
-model:
-  lr: 1e-3
-data:
-  batch_size: 32
-  num_workers: 2
-trainer:
-  max_epochs: 5
-  accelerator: "auto"
-```
-
-2. Start training:
+### 4. Configuration System
 ```bash
-python src/train.py
+# Hydra configuration prompt
+"Set up Hydra configuration with:
+- Separate configs for model, data, callbacks, trainer
+- Experiment configs for different scenarios
+- Override capability through CLI
+- Structured logging configuration"
 ```
 
-Monitor training:
+### 5. Callbacks & Monitoring
 ```bash
+# Callbacks setup prompt
+"Implement training callbacks for:
+- Model checkpointing (save best and last)
+- Early stopping on validation accuracy
+- Rich progress bar and model summary
+- TensorBoard logging integration"
+```
+
+### 6. Training Pipeline
+```bash
+# Training pipeline prompt
+"Create a training pipeline with:
+- Hydra-based experiment management
+- Seed setting for reproducibility
+- Multi-logger support
+- Metric tracking and optimization"
+```
+
+## 🛠️ Implementation Details
+
+### Core Components
+
+1. **Data Module** (`src/data/datamodule.py`)
+   - CatDogImageDataModule for data handling
+   - Automatic dataset management
+   - Configurable data loading parameters
+
+2. **Model** (`src/models/timmclassifier.py`)
+   - TimmClassifier with transfer learning
+   - MobileNetV2 backbone
+   - Configurable hyperparameters
+
+3. **Training** (`src/train.py`)
+   - Hydra-based configuration
+   - Lightning Trainer setup
+   - Callback initialization
+   - Logging configuration
+
+### Configuration System
+
+1. **Model Config** (`configs/model/timm_classify.yaml`)
+   ```yaml
+   model_name: "mobilenetv2_100"
+   num_classes: 2
+   lr: 1e-3
+   ```
+
+2. **Data Config** (`configs/data/cat_dog.yaml`)
+   ```yaml
+   batch_size: 8
+   num_workers: 0
+   train_val_test_split: [0.8, 0.1, 0.1]
+   ```
+
+3. **Callbacks** (`configs/callbacks/`)
+   - Model checkpointing
+   - Early stopping
+   - Rich progress visualization
+   - Model summary
+
+## 🚀 Usage Examples
+
+### Training
+```bash
+# Basic training
+python src/train.py experiment=catdog_ex
+
+# Override parameters
+python src/train.py model.lr=5e-4 data.batch_size=16
+```
+
+### Monitoring
+```bash
+# TensorBoard monitoring
 tensorboard --logdir logs/catdog_classification
 ```
 
-### Inference Pipeline
+## 🔧 Development Workflow
 
-1. Download sample images:
-```bash
-python src/download_samples.py
-```
+1. **Environment Setup**
+   ```bash
+   uv venv
+   source .venv/bin/activate
+   UV_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cpu uv sync
+   ```
 
-2. Run inference:
-```bash
-python src/infer.py \
-    -input_folder src/samples \
-    -output_folder predictions \
-    -ckpt "$(cat best_model_path.txt)"
-```
+2. **Configuration Updates**
+   - Modify configs in `configs/` directory
+   - Create new experiment configs for different scenarios
 
-## 🔧 Model Architecture
+3. **Code Development**
+   - Implement features in modular components
+   - Follow Lightning conventions
+   - Add appropriate logging and monitoring
 
-- Base: MobileNetV2 (pretrained)
-- Input: 96x96 RGB images
-- Output: Binary classification (Cat/Dog)
-- Training:
-  - Optimizer: Adam (lr=1e-3)
-  - Loss: Cross Entropy
-  - Metrics: Accuracy
-  - Batch size: 4 (CPU) / 32 (GPU)
-  - Gradient accumulation: 8 steps
-
-## 📊 Logging & Monitoring
-
-### Training Logs
-- `logs/catdog_classification/`: TensorBoard metrics
-- `logs/app.log`: Execution logs
-
-### Inference Outputs
-- Individual predictions with:
-  - Confidence scores
-  - Color-coded borders (green: >0.8, orange: >0.5, red: <0.5)
-  - Confidence bars
-- Summary grid of all predictions
-- `predictions_summary.txt`
-
-## 🔍 Code Components
-
-### DataModule
-- Downloads cat/dog dataset
-- Implements data transforms
-- Handles data loading
-```python
-data_module = CatDogImageDataModule(
-    batch_size=4,
-    num_workers=0
-)
-```
-
-### Model
-- MobileNetV2 with transfer learning
-- PyTorch Lightning implementation
-```python
-model = CatDogClassifier(lr=1e-3)
-```
-
-### Training
-- PyTorch Lightning Trainer
-- Rich progress bars
-- Model checkpointing
-```python
-trainer = L.Trainer(
-    max_epochs=5,
-    accelerator="cpu",
-    precision="32"
-)
-```
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. Memory Errors
-```bash
-# Reduce batch size in config.yaml
-data:
-  batch_size: 4
-```
-
-2. CUDA Issues
-```bash
-# Switch to CPU in config.yaml
-trainer:
-  accelerator: "cpu"
-```
-
-3. Path Issues
-```bash
-# Create required directories
-mkdir -p predictions logs/catdog_classification/checkpoints
-```
-
-## 📈 Performance
+## 📈 Results & Metrics
 
 - Training accuracy: ~95%
 - Validation accuracy: ~93%
 - Test accuracy: ~92%
 
-## 🛠 Development
+## 🎓 Learning Outcomes
 
-Using uv for dependency management:
-```bash
-# Add new dependency
-uv pip install package_name
+1. Modern MLOps practices with PyTorch Lightning
+2. Configuration management with Hydra
+3. Transfer learning implementation
+4. Proper logging and monitoring setup
+5. Production-ready project structure
 
-# Update dependencies
-uv pip freeze > requirements.txt
+## 🔍 Key Features from Prompts
 
-# Sync environment
-uv pip sync requirements.txt
-```
-
-## 📝 License
-
-MIT License
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Open pull request
+- ✅ Modular project structure
+- ✅ Hydra configuration system
+- ✅ Transfer learning with timm
+- ✅ Rich progress tracking
+- ✅ Comprehensive logging
+- ✅ Production-ready setup
 
 ## 📚 References
 
 - [PyTorch Lightning Documentation](https://lightning.ai/docs/pytorch/stable/)
-- [MobileNetV2 Paper](https://arxiv.org/abs/1801.04381)
+- [Hydra Documentation](https://hydra.cc/)
+- [timm Models](https://github.com/huggingface/pytorch-image-models)
 - [uv Package Manager](https://github.com/astral-sh/uv)
+```
+
+This README.md shows the step-by-step prompts used to build the project, making it clear how each component was developed and integrated. It also provides comprehensive documentation for users and contributors.
