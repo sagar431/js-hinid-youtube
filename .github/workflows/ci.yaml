@@ -18,10 +18,20 @@ jobs:
       id-token: write
 
     steps:
+      # Clean up disk space before starting
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          df -h
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: session-05
+          fetch-depth: 1  # Shallow clone to save space
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -60,6 +70,13 @@ jobs:
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: true
+
+      # Clean up before Docker steps
+      - name: Clean up before Docker
+        run: |
+          sudo rm -rf .venv
+          docker system prune -af
+          df -h
 
       # Docker steps
       - name: Set up Docker Buildx
