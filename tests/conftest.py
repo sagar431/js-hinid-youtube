@@ -1,4 +1,15 @@
+import rootutils
+
+# Set up root directory before any other imports
+root = rootutils.setup_root(
+    search_from=__file__,
+    indicator=".project-root",
+    pythonpath=True,
+    dotenv=True
+)
+
 import os
+import sys
 import pytest
 from hydra import compose, initialize
 from omegaconf import DictConfig
@@ -7,6 +18,11 @@ from pathlib import Path
 # Get project root directory
 PROJECT_ROOT = str(Path(__file__).parent.parent.absolute())
 os.environ["PROJECT_ROOT"] = PROJECT_ROOT
+
+# Add src to Python path
+src_path = os.path.join(PROJECT_ROOT, "src")
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
 
 @pytest.fixture(scope="session", autouse=True)
 def project_root():
@@ -44,5 +60,8 @@ def fast_dev_cfg(cfg: DictConfig) -> DictConfig:
     # Update data config
     cfg.data.num_workers = 0
     cfg.data.batch_size = 2
+    
+    # Explicitly disable testing
+    cfg.test = False
     
     return cfg 
