@@ -39,4 +39,5 @@ tensorboard/
 
 # Local development
 .env
-.env.local 
+.env.local .coverage
+data/catdog_test/
