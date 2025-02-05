@@ -14,14 +14,51 @@ dependencies = [
     "rich==13.9.4",
     "tensorboard==2.18.0",
     "timm==1.0.14",
-    "torch==2.6.0+cpu",
-    "torchvision==0.21.0+cpu",
+    "torch==2.6.0",
+    "torchvision==0.21.0",
+    "rootutils",
+    "torchmetrics==1.0.3",
+    "coverage>=7.6.10",
 ]
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
 addopts = "-v -s --strict-markers"
+pythonpath = [
+    "src"
+]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:torchmetrics.*",
+    "ignore::UserWarning:lightning.pytorch.core.module",
+    "ignore::UserWarning:torch.optim.lr_scheduler",
+    "ignore::UserWarning:lightning.pytorch.trainer.connectors.data_connector"
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/site-packages/*",
+    "*/tests/*",
+    "*/__init__.py",
+    "*/tmp/*",
+    "*/_remote_module_non_scriptable.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == '__main__':",
+    "pass",
+    "raise ImportError",
+    "if TYPE_CHECKING:"
 ]
