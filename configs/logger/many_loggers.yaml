@@ -1,6 +1,0 @@
-# Compose multiple loggers
-defaults:
-  - /logger@_here_: default
-  - _self_
-
-wandb: null  # Disabled by default 

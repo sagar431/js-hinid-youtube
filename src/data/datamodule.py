@@ -1,72 +1,29 @@
-import torch
 import lightning as L
 from pathlib import Path
-from typing import Union, Tuple
-from torch.utils.data import DataLoader, random_split
+from typing import Union
+from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import download_and_extract_archive
 
 class CatDogImageDataModule(L.LightningDataModule):
-    def __init__(
-        self, 
-        data_dir: Union[str, Path] = "data",
-        num_workers: int = 0,
-        batch_size: int = 8,
-        train_val_test_split: Tuple[float, float, float] = (0.8, 0.1, 0.1),
-        pin_memory: bool = False,
-    ):
+    def __init__(self, dl_path: Union[str, Path] = "data", num_workers: int = 0, batch_size: int = 8):
         super().__init__()
-        self.data_dir = Path(data_dir)
-        self.num_workers = num_workers
-        self.batch_size = batch_size
-        self.pin_memory = pin_memory
-        
-        # Validate and store split ratios
-        assert sum(train_val_test_split) == 1.0, "Split ratios must sum to 1"
-        self.train_ratio, self.val_ratio, self.test_ratio = train_val_test_split
-        
-        self.dataset_path = self.data_dir / "cats_and_dogs_filtered"
-        self.train_dataset = None
-        self.val_dataset = None
-        self.test_dataset = None
+        self._dl_path = dl_path
+        self._num_workers = num_workers
+        self._batch_size = batch_size
 
     def prepare_data(self):
-        """Download images if not already downloaded."""
-        if not self.dataset_path.exists():
-            download_and_extract_archive(
-                url="https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip",
-                download_root=str(self.data_dir),
-                remove_finished=True
-            )
+        """Download images and prepare images datasets."""
+        download_and_extract_archive(
+            url="https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip",
+            download_root=self._dl_path,
+            remove_finished=True
+        )
 
-    def setup(self, stage: str = None):
-        """Setup datasets with proper splits."""
-        if self.train_dataset is not None:
-            return  # Skip if already setup
-            
-        # Load the full dataset
-        full_dataset = ImageFolder(
-            root=self.dataset_path / "train",  # Use train folder for all splits
-            transform=self.train_transform
-        )
-        
-        # Calculate split sizes
-        total_size = len(full_dataset)
-        train_size = int(self.train_ratio * total_size)
-        val_size = int(self.val_ratio * total_size)
-        test_size = total_size - train_size - val_size
-        
-        # Split dataset
-        self.train_dataset, self.val_dataset, self.test_dataset = random_split(
-            full_dataset,
-            [train_size, val_size, test_size],
-            generator=torch.Generator().manual_seed(42)  # For reproducibility
-        )
-        
-        # Update transforms for validation and test
-        self.val_dataset.dataset.transform = self.valid_transform
-        self.test_dataset.dataset.transform = self.valid_transform
+    @property
+    def data_path(self):
+        return Path(self._dl_path).joinpath("cats_and_dogs_filtered")
 
     @property
     def normalize_transform(self):
@@ -89,29 +46,30 @@ class CatDogImageDataModule(L.LightningDataModule):
             self.normalize_transform
         ])
 
-    def train_dataloader(self):
+    def create_dataset(self, root, transform):
+        return ImageFolder(root=root, transform=transform)
+
+    def __dataloader(self, train: bool):
+        """Train/validation loaders."""
+        if train:
+            dataset = self.create_dataset(self.data_path.joinpath("train"), self.train_transform)
+        else:
+            dataset = self.create_dataset(self.data_path.joinpath("validation"), self.valid_transform)
         return DataLoader(
-            self.train_dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory
+            dataset=dataset, 
+            batch_size=self._batch_size, 
+            num_workers=0,  # Set to 0 for CPU-only environment
+            shuffle=train,
+            pin_memory=False,  # Disable pin_memory for CPU
+            persistent_workers=False  # Disable persistent workers
         )
+
+    def train_dataloader(self):
+        return self.__dataloader(train=True)
 
     def val_dataloader(self):
-        return DataLoader(
-            self.val_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory
-        )
+        return self.__dataloader(train=False)
 
     def test_dataloader(self):
-        return DataLoader(
-            self.test_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory
-        ) 
+        """Use validation dataset for testing"""
+        return self.__dataloader(train=False) 
