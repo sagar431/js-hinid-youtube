@@ -15,6 +15,9 @@ defaults:
 
 seed: 42
 
+# Add experiment name for Aim logger
+experiment_name: "catdog_classification"
+
 data:
   batch_size: 64
   num_workers: 0
@@ -41,6 +44,10 @@ callbacks:
     monitor: "val/acc"
     patience: 10
     mode: "max"
+
+logger:
+  aim:
+    experiment: ${experiment_name}  # Override experiment name for Aim logger
 
 # logger: 
   # wandb:

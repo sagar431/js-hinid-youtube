@@ -39,4 +39,5 @@ tensorboard/
 
 # Local development
 .env
-.env.local 
+.env.local .aim/
+data/cats_and_dogs_filtered/

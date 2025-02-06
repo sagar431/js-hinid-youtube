@@ -1,3 +1,4 @@
 defaults:
   - csv
   - tensorboard
+  - aim

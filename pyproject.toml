@@ -19,6 +19,7 @@ dependencies = [
     "rootutils",
     "torchmetrics==1.0.3",
     "coverage>=7.6.10",
+    "aim>=3.27.0",
 ]
 
 [build-system]
