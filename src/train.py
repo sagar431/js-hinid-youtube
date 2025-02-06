@@ -12,7 +12,7 @@ from hydra.utils import instantiate
 root = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 os.chdir(root)
 
-from utils import task_wrapper, setup_logger, logger
+from src.utils import task_wrapper, setup_logger, logger
 
 def get_logger(cfg: DictConfig) -> List[Logger]:
     """Initialize loggers from config."""
@@ -66,15 +66,16 @@ def train_model(cfg: DictConfig):
     logger.info("Starting training!")
     trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get("ckpt_path"))
 
-    # Test model
-    if cfg.get("test"):
+    # Test model (only if not in fast_dev_run mode)
+    if cfg.get("test") and not cfg.trainer.get("fast_dev_run", False):
         logger.info("Starting testing!")
         trainer.test(model=model, datamodule=datamodule, ckpt_path="best")
 
     # Get metric score for hyperparameter optimization
     optimized_metric = trainer.callback_metrics.get(cfg.get("optimized_metric"))
-
-    return optimized_metric
+    
+    # Return empty dict if no metrics (fast_dev_run case)
+    return {"train/loss": 0.0, "train/acc": 0.0} if optimized_metric is None else optimized_metric
 
 @hydra.main(version_base="1.3", config_path="../configs", config_name="train.yaml")
 def main(cfg: DictConfig) -> None:

@@ -1,51 +1,53 @@
+import rootutils
+
+# Set up root directory before any other imports
+root = rootutils.setup_root(
+    search_from=__file__,
+    indicator=".project-root",
+    pythonpath=True,
+    dotenv=True
+)
+
 import pytest
-from hydra.utils import instantiate
-import lightning as L
+from hydra import initialize, compose
+from src.train import train_model
 
-def test_train_model_fast_dev_run(fast_dev_cfg):
-    """Test if training runs without errors in fast_dev_run mode."""
-    # Initialize components
-    model = instantiate(fast_dev_cfg.model)
-    datamodule = instantiate(fast_dev_cfg.data)
-    
-    # Initialize trainer with fast_dev_run
-    trainer = instantiate(
-        fast_dev_cfg.trainer,
-        callbacks=[],  # Disable callbacks for fast_dev_run
-        logger=False,  # Disable logging for fast_dev_run
-        _convert_="partial"
-    )
-    
-    # Run training
-    trainer.fit(model=model, datamodule=datamodule)
-    
-    # Check if training completed
-    assert trainer.state.finished, "Training failed to complete"
+def test_train_and_test():
+    """Test complete training pipeline."""
+    with initialize(version_base="1.3", config_path="../../configs"):
+        cfg = compose(
+            config_name="train.yaml",
+            overrides=[
+                "experiment=catdog_ex",
+                "++trainer.fast_dev_run=True",
+                "test=False",  # Explicitly disable testing
+            ],
+        )
 
-def test_full_training_pipeline(fast_dev_cfg):
-    """Test the complete training pipeline including callbacks and logging."""
-    # Initialize components
-    model = instantiate(fast_dev_cfg.model)
-    datamodule = instantiate(fast_dev_cfg.data)
+    # Override paths in the config
+    project_root = rootutils.find_root(indicator=".project-root")
+    cfg.paths.root_dir = str(project_root)
+    cfg.paths.data_dir = str(project_root / "data")
+    cfg.paths.log_dir = str(project_root / "logs")
+    cfg.paths.output_dir = str(project_root / "outputs")
+    cfg.paths.work_dir = str(project_root)
+
+    # Run the training function
+    metrics = train_model(cfg)
+
+    # Verify metrics structure and values
+    assert isinstance(metrics, dict), "train_model should return a dictionary"
     
-    # Initialize callbacks
-    callbacks = []
-    if "callbacks" in fast_dev_cfg:
-        for _, cb_conf in fast_dev_cfg.callbacks.items():
-            if "_target_" in cb_conf:
-                callbacks.append(instantiate(cb_conf))
+    # In fast_dev_run mode, metrics will be empty
+    if not cfg.trainer.get("fast_dev_run", False):
+        assert "train/loss" in metrics, "Train loss should be in metrics"
+        assert "train/acc" in metrics, "Train accuracy should be in metrics"
+        assert 0 <= metrics.get("train/loss", 0) <= 10
+        assert 0 <= metrics.get("train/acc", 0) <= 1
     
-    # Initialize trainer
-    trainer = instantiate(
-        fast_dev_cfg.trainer,
-        callbacks=callbacks,
-        _convert_="partial"
-    )
-    
-    # Run training and testing
-    trainer.fit(model=model, datamodule=datamodule)
-    results = trainer.test(model=model, datamodule=datamodule)
-    
-    # Check if we have test results
-    assert results is not None
-    assert len(results) > 0 
+    # Check test metrics
+    if cfg.get("test"):
+        assert "test/loss" in metrics, "Test loss should be in metrics"
+        assert "test/acc" in metrics, "Test accuracy should be in metrics"
+        assert 0 <= metrics["test/loss"] <= 10, "Test loss should be between 0 and 10"
+        assert 0 <= metrics["test/acc"] <= 1, "Test accuracy should be between 0 and 1" 

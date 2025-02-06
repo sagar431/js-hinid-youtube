@@ -1,3 +1,11 @@
+import rootutils
+root = rootutils.setup_root(
+    search_from=__file__,
+    indicator=".project-root", 
+    pythonpath=True,
+    dotenv=True
+)
+
 import pytest
 from hydra.utils import instantiate
 from src.data.datamodule import CatDogImageDataModule
@@ -41,3 +49,30 @@ def test_cat_dog_datamodule_dataloaders(cfg):
     assert batch[0].shape[1] == 3  # channels
     assert batch[0].shape[2] == 96  # height
     assert batch[0].shape[3] == 96  # width 
+
+def test_catdog_datamodule():
+    """Test complete datamodule functionality."""
+    datamodule = CatDogImageDataModule(data_dir="data/catdog_test", batch_size=4)
+
+    # Test prepare_data
+    datamodule.prepare_data()
+
+    # Test setup
+    datamodule.setup()
+
+    # Test dataloaders
+    train_loader = datamodule.train_dataloader()
+    val_loader = datamodule.val_dataloader()
+    test_loader = datamodule.test_dataloader()
+
+    # Add assertions to check if the dataloaders are correctly set up
+    assert len(train_loader) > 0, "Train loader should not be empty"
+    assert len(val_loader) > 0, "Validation loader should not be empty"
+    assert len(test_loader) > 0, "Test loader should not be empty"
+
+    # Test batch contents
+    batch = next(iter(train_loader))
+    assert len(batch) == 2, "Batch should contain (images, labels)"
+    assert batch[0].shape[1] == 3, "Images should have 3 channels"
+    assert batch[0].shape[2] == 96, "Image height should be 96"
+    assert batch[0].shape[3] == 96, "Image width should be 96" 
