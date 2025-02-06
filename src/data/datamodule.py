@@ -45,28 +45,51 @@ class CatDogImageDataModule(L.LightningDataModule):
         if self.train_dataset is not None:
             return  # Skip if already setup
             
-        # Load the full dataset
-        full_dataset = ImageFolder(
-            root=self.dataset_path / "train",  # Use train folder for all splits
+        # Load datasets from train and validation folders
+        train_folder = self.dataset_path / "train"
+        validation_folder = self.dataset_path / "validation"
+        
+        # Load train dataset
+        train_full = ImageFolder(
+            root=train_folder,
             transform=self.train_transform
         )
         
-        # Calculate split sizes
-        total_size = len(full_dataset)
-        train_size = int(self.train_ratio * total_size)
-        val_size = int(self.val_ratio * total_size)
-        test_size = total_size - train_size - val_size
-        
-        # Split dataset
-        self.train_dataset, self.val_dataset, self.test_dataset = random_split(
-            full_dataset,
-            [train_size, val_size, test_size],
-            generator=torch.Generator().manual_seed(42)  # For reproducibility
+        # Load validation dataset
+        val_full = ImageFolder(
+            root=validation_folder,
+            transform=self.valid_transform
         )
         
-        # Update transforms for validation and test
-        self.val_dataset.dataset.transform = self.valid_transform
-        self.test_dataset.dataset.transform = self.valid_transform
+        # Calculate split sizes for train dataset
+        train_size = int(len(train_full) * 0.8)  # Using 80% for training
+        val_from_train_size = len(train_full) - train_size
+        
+        # Split train dataset
+        self.train_dataset, extra_val = random_split(
+            train_full,
+            [train_size, val_from_train_size],
+            generator=torch.Generator().manual_seed(42)
+        )
+        
+        # Combine extra validation data with validation folder data
+        val_datasets = [
+            extra_val,
+            val_full
+        ]
+        
+        # Create validation dataset
+        self.val_dataset = torch.utils.data.ConcatDataset(val_datasets)
+        
+        # Use validation folder as test set
+        self.test_dataset = val_full
+        
+        # Update transforms
+        self.train_dataset.dataset.transform = self.train_transform
+        if hasattr(self.val_dataset, 'dataset'):
+            self.val_dataset.dataset.transform = self.valid_transform
+        if hasattr(self.test_dataset, 'dataset'):
+            self.test_dataset.dataset.transform = self.valid_transform
 
     @property
     def normalize_transform(self):
