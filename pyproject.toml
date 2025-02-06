@@ -20,6 +20,7 @@ dependencies = [
     "torchmetrics==1.0.3",
     "coverage>=7.6.10",
     "aim>=3.27.0",
+    "mlflow>=2.10.0",
 ]
 
 [build-system]

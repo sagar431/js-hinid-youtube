@@ -41,3 +41,4 @@ tensorboard/
 .env
 .env.local .aim/
 data/cats_and_dogs_filtered/
+.aim/

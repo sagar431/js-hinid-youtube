@@ -48,6 +48,11 @@ callbacks:
 logger:
   aim:
     experiment: ${experiment_name}  # Override experiment name for Aim logger
+  mlflow:
+    experiment_name: ${experiment_name}  # Override experiment name for MLflow logger
+    tags:
+      model_name: ${model.model_name}
+      batch_size: ${data.batch_size}
 
 # logger: 
   # wandb:
